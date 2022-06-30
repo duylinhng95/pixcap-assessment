@@ -6,7 +6,6 @@ export interface Employee {
 
 export interface IEmployeeOrgApp {
     ceo: Employee;
-    employees: Employee[];
 
     move(employeeID: number, supervisorID: number): void;
 

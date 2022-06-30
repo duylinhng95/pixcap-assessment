@@ -6,7 +6,6 @@ import {RedoCommand} from "./commands/redo.command";
 
 export class EmployeeOrgApp implements IEmployeeOrgApp {
     ceo: Employee;
-    employees: Employee[] = [];
     private undoCommand: ICommand | undefined;
     private redoCommand: ICommand | undefined;
 

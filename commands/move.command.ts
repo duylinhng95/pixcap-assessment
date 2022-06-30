@@ -1,19 +1,26 @@
 import {ICommand} from "./command.interface";
 import {EmployeeOrgApp} from "../employee-organization.app";
-import {RemoveCommand} from "./remove.command";
 import {Employee} from "../interfaces";
 
 export class MoveCommand implements ICommand {
-    private oldSupervisorId: number | null = null;
+    private oldSupervisorId: number;
+    private backUpSubordinates: Employee[] = [];
+
     constructor (
         private readonly app: EmployeeOrgApp,
         private readonly employeeId: number,
         private readonly supervisorId: number
-    ){}
+    ){
+        this.oldSupervisorId = this.app.ceo.uniqueId;
+    }
 
     undo() {
-        const removeCommand = new RemoveCommand(this.app, this.employeeId, this.supervisorId);
-        removeCommand.execute();
+        for (const employee of this.backUpSubordinates) {
+            const moveBackToSubordinate = new MoveCommand(this.app, employee.uniqueId, this.employeeId);
+            moveBackToSubordinate.execute();
+        }
+        const undoMoveCommand = new MoveCommand(this.app, this.employeeId, this.oldSupervisorId);
+        undoMoveCommand.execute();
     }
 
     deepFindEmployee(employees: Employee[], employeeId: number, isSaveParentId = false): Employee | undefined {
@@ -39,7 +46,9 @@ export class MoveCommand implements ICommand {
             throw new Error('employeeId must not be ceo');
         }
 
-        let subordinate = this.deepFindEmployee(this.app.employees, this.employeeId);
+        let subordinate = this.deepFindEmployee(this.app.ceo.subordinates, this.employeeId, true);
+
+        this.backUpSubordinates = subordinate?.subordinates || [];
 
         if (!subordinate) {
             throw new Error('employee not found');
@@ -49,7 +58,7 @@ export class MoveCommand implements ICommand {
     }
 
     private getSupervisor() {
-        const supervisor = this.deepFindEmployee(this.app.employees, this.supervisorId);
+        const supervisor = this.deepFindEmployee(this.app.ceo.subordinates, this.supervisorId);
         if (!supervisor) {
             throw new Error('supervisor is not found');
         }
@@ -62,25 +71,25 @@ export class MoveCommand implements ICommand {
         return supervisor;
     }
 
-    cleanUpEmployees(subordinate: Employee) {
-        if (this.oldSupervisorId) {
-            const oldSupervisorId = this.deepFindEmployee(this.app.employees, this.oldSupervisorId);
-            if (oldSupervisorId) oldSupervisorId.subordinates = {
-                ...oldSupervisorId.subordinates,
-                ...subordinate.subordinates
-            }
+    private cleanUpEmployees() {
+        const oldSupervisor = this.deepFindEmployee(this.app.ceo.subordinates, this.oldSupervisorId);
 
-            subordinate.subordinates = [];
+        if (oldSupervisor) {
+            oldSupervisor.subordinates = [
+                ...oldSupervisor.subordinates.filter((employee) => employee.uniqueId !== this.employeeId),
+                ...this.backUpSubordinates
+            ]
         }
     }
 
     execute() {
         const subordinate = this.getSubordinate();
-        const supervisor = this.getSupervisor();
+        subordinate.subordinates = [];
 
+        const supervisor = this.getSupervisor();
         supervisor.subordinates.push(subordinate);
 
-        this.cleanUpEmployees(subordinate);
+        this.cleanUpEmployees();
 
         this.app.setUndoCommand(this);
     }
