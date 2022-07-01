@@ -15,12 +15,13 @@ export class MoveCommand implements ICommand {
     }
 
     undo() {
+        const undoMoveCommand = new MoveCommand(this.app, this.employeeId, this.oldSupervisorId);
+        undoMoveCommand.execute();
+
         for (const employee of this.backUpSubordinates) {
             const moveBackToSubordinate = new MoveCommand(this.app, employee.uniqueId, this.employeeId);
             moveBackToSubordinate.execute();
         }
-        const undoMoveCommand = new MoveCommand(this.app, this.employeeId, this.oldSupervisorId);
-        undoMoveCommand.execute();
     }
 
     deepFindEmployee(employees: Employee[], employeeId: number, isSaveParentId = false): Employee | undefined {
@@ -32,9 +33,9 @@ export class MoveCommand implements ICommand {
             let result;
 
             if (childEmployee.subordinates.length) {
-                result = this.deepFindEmployee(childEmployee.subordinates, employeeId);
-                if (isSaveParentId) this.oldSupervisorId = childEmployee.uniqueId;
+                result = this.deepFindEmployee(childEmployee.subordinates, employeeId, isSaveParentId);
                 if (result) {
+                    if (isSaveParentId && this.oldSupervisorId === this.app.ceo.uniqueId) this.oldSupervisorId = childEmployee.uniqueId;
                     return result;
                 }
             }

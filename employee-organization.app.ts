@@ -13,13 +13,11 @@ export class EmployeeOrgApp implements IEmployeeOrgApp {
         this.ceo = ceo;
     }
 
-    setUndoCommand(command: Command) {
+    setUndoCommand(command: Command | undefined) {
         this.undoCommand = command;
-        this.redoCommand = undefined;
     }
 
-    setRedoCommand(command: Command) {
-        this.undoCommand = undefined;
+    setRedoCommand(command: Command | undefined) {
         this.redoCommand = command;
     }
 

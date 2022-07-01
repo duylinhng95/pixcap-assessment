@@ -14,6 +14,7 @@ export class RedoCommand implements ICommand {
         }
 
         this.app.setUndoCommand(redoCommand);
+        this.app.setRedoCommand(undefined);
         redoCommand.execute();
     }
 }

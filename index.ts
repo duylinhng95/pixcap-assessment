@@ -37,9 +37,6 @@ const ceo: Employee = {
 };
 
 const app = new EmployeeOrgApp(ceo);
-console.log('1st CALLED: ', app.ceo.subordinates);
 app.move(4, 6);
-// debugger;
-console.log('2nd CALLED: ', app.ceo.subordinates);
 app.undo();
-console.log('3rd CALLED: ', app.ceo.subordinates);
+app.redo();

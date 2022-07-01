@@ -13,6 +13,7 @@ export class UndoCommand implements ICommand {
             return;
         }
 
+        this.app.setUndoCommand(undefined);
         this.app.setRedoCommand(undoCommand);
         undoCommand.undo();
     }
